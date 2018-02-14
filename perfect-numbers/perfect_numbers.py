@@ -1,32 +1,9 @@
-import operator as op
-from itertools import combinations
-from functools import reduce
-
-
-def prime_factors(n):
-    primes = []
-    while n > 1:
-        for i in range(2, int(n**0.5)+1):
-            if n % i == 0:
-                primes.append(i)
-                n //= i
-                break
-        else:
-            primes.append(n)
-            break
-    return primes
+from itertools import chain
 
 
 def factors(n):
     """All factors of the number n excluding n"""
-    combs = []
-    primes = prime_factors(n)
-    for i in range(1, len(primes)):
-        combs.extend(list(combinations(primes, i)))
-    result = [1, ]
-    for ms in combs:
-        result.append(reduce(op.mul, ms))
-    return list(set(result) - {n})
+    return list(set(chain.from_iterable((i, n//i) for i in range(1, int(n**0.5) + 1) if n % i == 0)) - {n})
 
 
 def classify(number):
