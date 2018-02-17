@@ -3,7 +3,7 @@ import re
 
 class Phone(object):
     def __init__(self, phone_number):
-        match = re.match(r'1?([2-9]\d{2}[2-9]\d{6})$', ''.join([d for d in phone_number if d.isdigit()]))
+        match = re.match(r'1?([2-9]\d{2}[2-9]\d{6})$', ''.join(filter(str.isdigit, phone_number)))
         if not match:
             raise ValueError('Invalid phone number')
         self.number = match.group(1)
