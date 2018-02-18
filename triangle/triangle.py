@@ -1,7 +1,7 @@
 def is_valid_triangle(func):
     def wrapper(sides):
         *remain, c = sorted(sides)
-        return sum(remain) > c and func(sides)
+        return sum(remain) > c and min(remain) > 0 and func(sides)
     return wrapper
 
 
