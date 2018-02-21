@@ -1,42 +1,50 @@
 import re
 from collections import Counter
-card_table = [[rank + suit for rank in '2_3_4_5_6_7_8_9_10_J_Q_K_A'.split('_')] for suit in 'SHCD']
 
+card_table = [[rank + suit for rank in '2_3_4_5_6_7_8_9_10_J_Q_K_A'.split('_')] for suit in 'SHCD']
 translate = {'J': '11', 'Q': '12', 'K': '13', 'A': '14'}
+
+
+def _rest(cards, exclude, with_suit=True):
+    if with_suit:
+        return tuple((rank, suit) for rank, suit in cards if rank != exclude)
+    return tuple(sorted((rank for rank, _ in cards if rank != exclude), reverse=True))
 
 
 def _of_a_kind(cards, m):
     kinds = [rank for rank, cnt in Counter(rank for rank, _ in cards).items() if cnt >= m]
     if not kinds:
-        return 0
-    return max(kinds)
+        return
+    return (max(kinds), *_rest(cards, max(kinds), with_suit=False))
 
 
-def _twice_of_a_kind(cards, m, n):
-    m, n = sorted([m, n], reverse=True)
-    first_kind = _of_a_kind(cards, m)
+def _twice_of_a_kind(cards, m1, m2):
+    m1, m2 = sorted([m1, m2], reverse=True)
+    first_kind = _of_a_kind(cards, m1)
     if not first_kind:
-        return 0, 0
-    working = [(rank, suit) for rank, suit in cards if rank != first_kind]
-    second_kinds = _of_a_kind(working, n)
-    if not second_kinds:
-        return 0, 0
-    return first_kind, second_kinds
+        return
+    rest = _rest(cards, first_kind[0])
+    second_kind = _of_a_kind(rest, m2)
+    if not second_kind:
+        return
+    return (first_kind[0], second_kind[0], *_rest(rest, second_kind[0], with_suit=False))
 
 
 def is_straight_flush(cards):
     straight = is_straight(cards)
-    if is_straight(cards) and set(is_flush(cards)).pop() != 0:
+    if straight and set(is_flush(cards)).pop() != 0:
         return straight
     return 0
 
 
 def is_four_of_a_kind(cards):
-    return _of_a_kind(cards, 4)
+    kind = _of_a_kind(cards, 4)
+    return kind if kind else (0, 0)
 
 
 def is_full_house(cards):
-    return _twice_of_a_kind(cards, 3, 2)
+    kinds = _twice_of_a_kind(cards, 3, 2)
+    return kinds if kinds else (0, 0)
 
 
 def is_flush(cards):
@@ -55,19 +63,22 @@ def is_straight(cards):
 
 
 def is_three_of_a_kind(cards):
-    return _of_a_kind(cards, 3)
+    kind = _of_a_kind(cards, 3)
+    return kind if kind else (0, 0, 0)
 
 
 def is_two_pair(cards):
-    return _twice_of_a_kind(cards, 2, 2)
+    kinds = _twice_of_a_kind(cards, 2, 2)
+    return kinds if kinds else (0, 0, 0)
 
 
 def is_one_pair(cards):
-    return _of_a_kind(cards, 2)
+    kind = _of_a_kind(cards, 2)
+    return kind if kind else (0, 0, 0, 0)
 
 
 def high_card(cards):
-    return max(rank for rank, _ in cards)
+    return _rest(cards, [], with_suit=False)
 
 
 combinations = [is_straight_flush, is_four_of_a_kind, is_full_house, is_flush, is_straight, is_three_of_a_kind, is_two_pair, is_one_pair, high_card]
@@ -78,11 +89,6 @@ def poker(hands_pre):
               for card in hand
               for rank, suit in [re.match(r'(\d+|J|Q|K|A)(\w)', card).groups()]]
              for hand in hands_pre]
-    print(hands)
     combs = [[f(cards) for f in combinations] for cards in hands]
-    print(combs)
     winner_comb = max(combs)
     return [hands_pre[i] for i in (i for i, comb in enumerate(combs) if comb == winner_comb)]
-
-
-print(poker(['JD QH JS 8D QC'.split(), 'JS QS JC 2D QD'.split()]))
